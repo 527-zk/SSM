@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.dao.RoleDao">
+    <!--查询全部角色-->
+    <select id="queryAllRole" resultType="role">
+        select * from role
+    </select>
+    <!--添加角色-->
+    <insert id="addRole" parameterType="Role">
+        insert into role (roleName,roleDesc) values (#{roleName},#{roleDesc})
+    </insert>
+<!--    删除角色-->
+    <delete id="deleteRoleById" parameterType="integer">
+        delete from role where id = #{id}
+    </delete>
+    <!--根据Id查询角色-->
+    <select id="queryRoleById" resultMap="RolePermission">
+        select r.*,p.id pid,p.permissionName,p.url
+            from role r
+            left join role_permission rp on r.id=rp.roleId
+            left join permission p on rp.permissionId= p.id
+            where r.id=#{id}
+    </select>
+    <!--查询角色返回结果集-->
+    <resultMap id="RolePermission" type="Role">
+        <result property="id" column="id"/>
+        <result property="roleName" column="roleName"/>
+        <result property="roleDesc" column="roleDesc"/>
+        <collection property="permissions" ofType="permission">
+            <result property="id" column="pid"/>
+            <result property="permissionName" column="permissionName"/>
+            <result property="url" column="url"/>
+        </collection>
+    </resultMap>
+    <!--查询出角色可以添加的权限-->
+    <select id="queryOtherPermissions" resultType="permission">
+        select * from permission where id not in (select permissionId from role_permission where roleId=#{id})
+    </select>
+    <!--给角色添加权限-->
+    <insert id="addPermissionToRole">
+        insert into role_permission (roleId,permissionId) values (#{roleId},#{permissionId})
+    </insert>
+<!--删除角色已有的权限-->
+    <delete id="deletePermissionFromRole">
+        delete from role_permission where roleId=#{roleId} and permissionId=#{permissionId}
+    </delete>
+</mapper>

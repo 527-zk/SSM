@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.dao.UserDao">
+    <!--根据用户名查询user-->
+    <select id="queryUserByUsername" resultMap="UserRole">
+        select u.*,r.roleName roleName,r.roleDesc roleDesc from users u
+        left join users_role ur on u.id=ur.userId
+        left join role r on ur.roleId=r.id
+        where u.username = #{username}
+    </select>
+    <!--根据ID查询user-->
+    <select id="queryUserById" resultMap="UserRole">
+        select u.*,r.id roleId,r.roleName roleName,r.roleDesc roleDesc,p.id permissionId,p.permissionName permissionName,p.url purl
+            from users u
+            left join users_role ur on u.id=ur.userId
+            left join role r on ur.roleId=r.id
+            left join role_permission rp on r.id=rp.roleId
+            left join permission p on rp.permissionId=p.id
+            where u.id = #{id}
+    </select>
+    <!--查询用户返回结果集-->
+    <resultMap id="UserRole" type="UserInfo">
+        <result property="id" column="id"/>
+        <result property="email" column="email"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="phoneNum" column="phoneNum"/>
+        <result property="status" column="status"/>
+        <collection property="roles" ofType="Role">
+            <result property="id" column="roleId"/>
+            <result property="roleName" column="roleName"/>
+            <result property="roleDesc" column="roleDesc"/>
+            <collection property="permissions" ofType="Permission">
+                <result property="id" column="permissionId"/>
+                <result property="permissionName" column="permissionName"/>
+                <result property="url" column="purl"/>
+            </collection>
+        </collection>
+    </resultMap>
+    <!--查询所有的用户-->
+    <select id="queryAllUser" resultMap="UserRole">
+        select * from users
+    </select>
+
+    <!--添加用户-->
+    <insert id="addUser" parameterType="UserInfo">
+        insert into users (email,username,password,phoneNum,status) values (#{email},#{username},#{password},#{phoneNum},#{status});
+    </insert>
+<!--    删除用户-->
+    <delete id="deleteUser" parameterType="integer">
+        delete from users where id = #{id}
+    </delete>
+    <!--查询出用户没有的角色信息-->
+    <select id="queryOtherRoles" resultType="role">
+        select * from role where id not in (select roleId from  users_role where  userId = #{id})
+    </select>
+    <!--给用户添加角色-->
+    <insert id="addRoleToUser">
+        insert into users_role (userId,roleId) values (#{userId},#{roleId})
+    </insert>
+<!--    将用户从角色中删除-->
+    <delete id="deleteRoleFromUser">
+        delete from users_role where userId = #{userId} and roleId = #{roleId}
+    </delete>
+<!--    修改用户个人信息-->
+    <update id="updateUserInfo">
+        update users set email=#{email},phoneNum=#{phoneNum} where username=#{userName}
+    </update>
+<!--    修改密码-->
+    <update id="updatePassword">
+        update users set password=#{newPassword} where username=#{userName}
+    </update>
+</mapper>

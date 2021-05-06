@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssm.dao.OrderDao">
+    <!--查询全部订单-->
+    <select id="queryAllOrders" resultMap="OrderProduct">
+        select a.*,p.productNum,p.productPrice,m.`name` mname from orders a
+        left join product p on a.productId=p.id
+        left join `member` m on a.memberId=m.id
+    </select>
+    <!--查询结果集映射-->
+    <resultMap id="OrderProduct" type="orders">
+        <result property="id" column="id"/>
+        <result property="orderNum" column="orderNum"/>
+        <result property="orderTime" column="orderTime"/>
+        <result property="orderDesc" column="orderDesc"/>
+        <result property="peopleCount" column="peopleCount"/>
+        <result property="payType" column="payType"/>
+        <result property="orderStatus" column="orderStatus"/>
+        <!--产品结果映射，与订单得关系是1对1-->
+        <association property="product" javaType="Product">
+            <result property="productName" column="productNum"/>
+            <result property="productPrice" column="productPrice"/>
+            <result property="cityName" column="cityName"/>
+            <result property="departureTime" column="departureTime"/>
+        </association>
+        <!--会员结果映射，与订单得关系是1对1-->
+        <association property="member" javaType="Member">
+            <result property="name" column="mname"/>
+            <result property="nickName" column="mnickName"/>
+            <result property="phoneNum" column="mphoneNum"/>
+            <result property="email" column="memail"/>
+        </association>
+        <!--成员结果映射，与订单的关系是1对多.使用collection接受-->
+        <collection property="travellers" ofType="Traveller">
+            <result property="name" column="tname"/>
+            <result property="sex" column="tsex"/>
+            <result property="phoneNum" column="tphoneNum"/>
+            <result property="credentialsType" column="tcredentialsType"/>
+            <result property="credentialsNum" column="tcredentialsNum"/>
+            <result property="travellerType" column="ttravellerType"/>
+        </collection>
+    </resultMap>
+
+    <!--根据ID查询订单-->
+    <select id="queryOrderById" resultMap="OrderProduct">
+        select a.*,p.productNum,p.productPrice,p.cityName,p.departureTime,m.`name` mname,m.nickName mnickName,m.phoneNum mphoneNum,m.email memail,
+        t.name tname,t.sex tsex,t.phoneNum tphoneNum,t.credentialsType tcredentialsType,t.credentialsNum tcredentialsNum
+            from orders a
+            left join product p on a.productId=p.id
+            left join `member` m on a.memberId=m.id
+            left join order_traveller ot on a.id = ot.orderId
+            left join traveller t on ot.travellerId = t.id
+            where a.id=#{id}
+    </select>
+    <delete id="deleteOrderById" parameterType="int">
+        delete from orders where id = #{id}
+    </delete>
+
+    <select id="checkPermission" parameterType="string" resultType="int">
+        select count(*) from permission p
+            left join role_permission rp on p.id = rp.permissionId
+            left join role r on r.id = rp.roleId
+            left join users_role ur on ur.roleId = r.id
+            left join users u on ur.userId = u.id
+        where u.username = #{username} and p.url like concat('%',#{url})
+
+    </select>
+</mapper>
